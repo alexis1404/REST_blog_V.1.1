@@ -110,7 +110,9 @@ class UserController extends Controller
             return new JsonResponse('User not found');
         }
 
-        return new JsonResponse($this->get('user_manager')->deleteUser($user));
+        $this->get('user_manager')->deleteUser($user);
+
+        return new JsonResponse('User with ID ' . $id_user . ' deleted');
     }
 
     /**
@@ -131,7 +133,7 @@ class UserController extends Controller
 }
     В результате будет создан уже активный юзер с ролью ADMIN. Пароль шифруется при помощи bcrypt
     */
-    public function createNewSuperUser(Request $request)
+    public function createNewSuperUserAction(Request $request)
     {
         $content = $request->getContent();
 
@@ -178,7 +180,7 @@ class UserController extends Controller
     В результате будет создан неактивный юзер с ролью USER. Пароль шифруется при помощи bcrypt, а на
     указанный email будет отправлено письмо для активации юзера.
     */
-    public function createNewStandardUser(Request $request)
+    public function createNewStandardUserAction(Request $request)
     {
         $content = $request->getContent();
 
@@ -251,7 +253,7 @@ class UserController extends Controller
      *
      * В случае успешной авторизации возвращает НОВЫЙ Api Key для юзера
      */
-    public function loginUser(Request $request)
+    public function loginUserAction(Request $request)
     {
         $content = $request->getContent();
 
@@ -293,7 +295,7 @@ class UserController extends Controller
     /*
      * Сбрасывает ApiKey юзера в NULL
      */
-    public function userLogout()
+    public function userLogoutAction()
     {
         $actual_user = $this->getUser()->getUsername();
 
@@ -308,7 +310,7 @@ class UserController extends Controller
      * @Route("/api/get_user_posts/{id_user}", name="get_user_post")
      * @Method("GET")
      */
-    public function getUserPosts($id_user)
+    public function getUserPostsAction($id_user)
     {
         $user = $this->get('user_manager')->getOneUser($id_user);
 
@@ -337,10 +339,84 @@ class UserController extends Controller
             return new JsonResponse($result);
     }
 
+    /**
+     * @Route("/api/edit_user/{id_user}", name="edit_user")
+     * @Method("POST")
+     */
+    /*
+    Ожидает JSON-данные в таком виде:
+    {
+
+    "username": "Shurik",
+    "email": "shurik@gmail.com",
+    "active": 1,
+    "role": "ROLE_ADMIN",
+    "api_key": "ekll@#0)llrfdvll232323245fffd",
+    "password": "qwerty"
+
+}
+    Количество полей может быть любым
+    */
+    public function editUser($id_user, Request $request)
+    {
+        $actual_user = $this->get('user_manager')->getOneUser($id_user);
+
+        if(!$actual_user){
+
+            return new JsonResponse('User not found');
+        }
+
+        $content = $request->getContent();
+
+        if(empty($content)){
+
+            throw new HttpException(400, 'Bad request!');
+        }
+
+        $user_data = json_decode($content, true);
+
+        if(isset($user_data['username']))
+        {
+            $actual_user->setUsername($user_data['username']);
+        }
+        if(isset($user_data['email'])){
+
+            $actual_user->setEmail($user_data['email']);
+        }
+        if(isset($user_data['active'])){
+
+            $actual_user->setActive($user_data['active']);
+        }
+        if(isset($user_data['role'])){
+
+            $actual_user->setRole($user_data['role']);
+        }
+        if(isset($user_data['api_key'])){
+
+            $actual_user->setApiKey($user_data['api_key']);
+        }
+        if(isset($user_data['password'])){
+
+            $actual_user->setPassword($user_data['password']);
+        }
+
+        $this->validator($actual_user);
+
+        if(isset($user_data['password'])){
+
+            $actual_user->setPassword($this->hashPassword($actual_user, $user_data['password']));
+        }
+
+        $this->get('user_manager')->userSaveInDatabase($actual_user);
+
+        return new JsonResponse('User edit successfully');
+    }
+
     //service methods
 
     public function hashPassword($user, $user_password)
     {
+
         $hash = $this->get('security.password_encoder')->encodePassword($user, $user_password);
 
         return $hash;

@@ -380,6 +380,17 @@ class User implements UserInterface
         $this->apiKey = null;
     }
 
+    public function createNewPost($name_post, $date_create_post, $author_post)
+    {
+        $post = new Post($name_post, $date_create_post, $author_post);
+
+        $post->setUserPost($this);
+
+        $this->addPost($post);
+
+        return $post;
+    }
+
     /**
      * Add post
      *

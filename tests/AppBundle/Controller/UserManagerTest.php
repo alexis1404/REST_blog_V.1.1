@@ -87,7 +87,7 @@ class UserManagerTest extends \PHPUnit_Framework_TestCase
 
         $userManager = new UserManager($em);
 
-        $this->assertEquals('User with ID  deleted', $userManager->deleteUser($user = new User('shurik', 'shurik@mail.com', 'ROLE_USER', '1111', '2014:10:11', 0, 'password')));
+        $userManager->deleteUser($user = new User('shurik', 'shurik@mail.com', 'ROLE_USER', '1111', '2014:10:11', 0, 'password'));
 
     }
 

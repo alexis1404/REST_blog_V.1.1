@@ -31,11 +31,7 @@ class UserManager
 
     public function deleteUser($user)
     {
-        $id_user = $user->getId();
-
         $this->repo_user->removeObject($user);
-
-        return 'User with ID ' . $id_user . ' deleted';
     }
 
     public function userSaveInDatabase($user)

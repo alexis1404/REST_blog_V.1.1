@@ -64,11 +64,12 @@ class Post
      */
     private $user_post;
 
-    public function __construct($name_post, $date_create_post, $author_post)
+    public function __construct($name_post, $author_post, $text_post)
     {
         $this->namePost = $name_post;
-        $this->dateCreatePost = $date_create_post;
+        $this->dateCreatePost = new \DateTime('now');
         $this->authorPost = $author_post;
+        $this->textPost = $text_post;
     }
 
     /**
