@@ -4,6 +4,7 @@ namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+use JMS\Serializer\Tests\Fixtures\Comment;
 
 
 /**
@@ -64,12 +65,18 @@ class Post
      */
     private $user_post;
 
+    /**
+     * @ORM\OneToMany(targetEntity="AppBundle\Entity\Comment", mappedBy="post_comment", cascade={"persist", "remove"})
+     */
+    private $post_comment;
+
     public function __construct($name_post, $author_post, $text_post)
     {
         $this->namePost = $name_post;
         $this->dateCreatePost = new \DateTime('now');
         $this->authorPost = $author_post;
         $this->textPost = $text_post;
+        $this->post_comment = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     /**
@@ -225,4 +232,39 @@ class Post
     {
         return $this->user_post;
     }
+
+    /**
+     * Add postComment
+     *
+     * @param \AppBundle\Entity\Comment $postComment
+     *
+     * @return Post
+     */
+    public function addPostComment(\AppBundle\Entity\Comment $postComment)
+    {
+        $this->post_comment[] = $postComment;
+
+        return $this;
+    }
+
+    /**
+     * Remove postComment
+     *
+     * @param \AppBundle\Entity\Comment $postComment
+     */
+    public function removePostComment(\AppBundle\Entity\Comment $postComment)
+    {
+        $this->post_comment->removeElement($postComment);
+    }
+
+    /**
+     * Get postComment
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getPostComment()
+    {
+        return $this->post_comment;
+    }
+
 }

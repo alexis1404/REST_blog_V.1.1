@@ -9,11 +9,31 @@ services:
 #        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
      user_manager:
             class:  AppBundle\Services\UserManager
-            arguments: ["@doctrine.orm.entity_manager"]
+            arguments: ["@doctrine.orm.entity_manager", "@any_services", "@upload_user_photo", "@upload_users_gallery"]
 
      post_manager:
             class: AppBundle\Services\PostManager
-            arguments: ["@doctrine.orm.entity_manager"]
+            arguments: ["@doctrine.orm.entity_manager", "@any_services", "@upload_picture_for_post"]
+
+     comment_manager:
+            class: AppBundle\Services\CommentManager
+            arguments: ["@doctrine.orm.entity_manager", "@any_services"]
+
+     any_services:
+            class: AppBundle\Services\AnyServices
+            arguments: ["@security.password_encoder", "@validator", "@mailer"]
+
+     upload_picture_for_post:
+            class: AppBundle\Uploader\Uploader
+            arguments: ["%post_picture_directory%"]
+
+     upload_user_photo:
+            class: AppBundle\Uploader\Uploader
+            arguments: ["%user_photo_directory%"]
+
+     upload_users_gallery:
+           class: AppBundle\Uploader\Uploader
+           arguments: ["%user_gallery_directory%"]
 
 # security servises ( api_key_user_provider and apikey_authenticator)
      api_key_user_provider:

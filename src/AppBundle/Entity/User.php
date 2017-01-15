@@ -56,7 +56,7 @@ class User implements UserInterface
      * @var string
      *
      * @ORM\Column(name="role", type="string", length=50)
-     *
+     *@Assert\Choice({"ROLE_ADMIN", "ROLE_USER"}, message="Invalid value! Only ROLE_USER or ROLE_ADMIN!")
      */
     private $role;
 
@@ -64,6 +64,7 @@ class User implements UserInterface
      * @var \DateTime
      *
      * @ORM\Column(name="user_create_date", type="datetime")
+     * @Assert\DateTime()
      *
      */
     private $userCreateDate;
@@ -80,6 +81,7 @@ class User implements UserInterface
      * @var bool
      *
      * @ORM\Column(name="active", type="boolean")
+     * @Assert\Choice({1, 0}, message="Invalid value! Only 1 or 0!")
      *
      */
     private $active;
@@ -104,16 +106,29 @@ class User implements UserInterface
      */
     private $posts;
 
-    public function __construct($username, $email, $role, $apiKey, $createDate, $active, $password)
+    /**
+     * @ORM\OneToMany(targetEntity="AppBundle\Entity\Comment", mappedBy="user_comment", cascade={"persist", "remove"})
+     *
+     */
+    private $comments;
+
+    /**
+     * @ORM\OneToMany(targetEntity="AppBundle\Entity\UserGallery", mappedBy="owner_images", cascade={"persist", "remove"})
+     */
+    private $images;
+
+    public function __construct($username, $email, $role, $active, $password)
     {
         $this->username = $username;
         $this->email = $email;
         $this->role = $role;
-        $this->apiKey = $apiKey;
-        $this->userCreateDate = $createDate;
+        $this->apiKey = bin2hex(random_bytes(32));
+        $this->userCreateDate = new \DateTime('now');
         $this->active = $active;
         $this->password = $password;
         $this->posts = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->comments = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->images = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     /**
@@ -332,41 +347,6 @@ class User implements UserInterface
         return null;
     }
 
-
-    public function userActivator()
-    {
-        $this->active = 1;
-    }
-
-    public function logout()
-    {
-        $this->apiKey = null;
-    }
-
-    /**
-     * Set role
-     *
-     * @param string $role
-     *
-     * @return User
-     */
-    public function setRole($role)
-    {
-        $this->role = $role;
-
-        return $this;
-    }
-
-    /**
-     * Get role
-     *
-     * @return string
-     */
-    public function getRole()
-    {
-        return $this->role;
-    }
-
     //logic in entity
 
     public function activationUser()
@@ -380,15 +360,30 @@ class User implements UserInterface
         $this->apiKey = null;
     }
 
-    public function createNewPost($name_post, $date_create_post, $author_post)
+    public function createNewPost($name_post, $author_post, $text_post)
     {
-        $post = new Post($name_post, $date_create_post, $author_post);
+        $post = new Post($name_post, $author_post, $text_post);
 
         $post->setUserPost($this);
 
         $this->addPost($post);
 
         return $post;
+    }
+
+    public function createNewComment($text_comment, $post_comment)
+    {
+        $comment = new Comment($text_comment, $this->getUsername());
+
+        $comment->setPostComment($post_comment);
+
+        $comment->setUserComment($this);
+
+        $post_comment->addPostComment($comment);
+
+        $this->addComment($comment);
+
+        return $comment;
     }
 
     /**
@@ -423,5 +418,73 @@ class User implements UserInterface
     public function getPosts()
     {
         return $this->posts;
+    }
+
+    /**
+     * Add comment
+     *
+     * @param \AppBundle\Entity\Comment $comment
+     *
+     * @return User
+     */
+    public function addComment(\AppBundle\Entity\Comment $comment)
+    {
+        $this->comments[] = $comment;
+
+        return $this;
+    }
+
+    /**
+     * Remove comment
+     *
+     * @param \AppBundle\Entity\Comment $comment
+     */
+    public function removeComment(\AppBundle\Entity\Comment $comment)
+    {
+        $this->comments->removeElement($comment);
+    }
+
+    /**
+     * Get comments
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getComments()
+    {
+        return $this->comments;
+    }
+
+    /**
+     * Add image
+     *
+     * @param \AppBundle\Entity\UserGallery $image
+     *
+     * @return User
+     */
+    public function addImage(\AppBundle\Entity\UserGallery $image)
+    {
+        $this->images[] = $image;
+
+        return $this;
+    }
+
+    /**
+     * Remove image
+     *
+     * @param \AppBundle\Entity\UserGallery $image
+     */
+    public function removeImage(\AppBundle\Entity\UserGallery $image)
+    {
+        $this->images->removeElement($image);
+    }
+
+    /**
+     * Get images
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getImages()
+    {
+        return $this->images;
     }
 }

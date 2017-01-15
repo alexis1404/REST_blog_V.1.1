@@ -7,6 +7,9 @@ imports:
 # http://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
     locale: en
+    post_picture_directory: '%kernel.root_dir%/../web/uploads/pictures_for_posts'
+    user_photo_directory: '%kernel.root_dir%/../web/uploads/photos_for_users'
+    user_gallery_directory: '%kernel.root_dir%/../web/uploads/users_gallery'
 
 framework:
     #esi:             ~

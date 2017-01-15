@@ -54,7 +54,6 @@ class PostController extends Controller
 
             throw new HttpException(204, 'Post not found');
         }
-
         $result[] = [
             'id' => $post->getId(),
             'author_post' => $post->getAuthorPost(),
@@ -79,7 +78,6 @@ class PostController extends Controller
         if(empty($posts)){
             throw new HttpException(204, 'Posts not found');
         }
-
         $result = [];
 
         foreach($posts as $value){
@@ -104,16 +102,7 @@ class PostController extends Controller
      */
     public function deletePostAction($id_post)
     {
-        $post = $this->get('post_manager')->getOnePost($id_post);
-
-        if(empty($post)){
-
-            throw new HttpException(204, 'Post not found');
-        }
-
-        $this->get('post_manager')->deletePost($post);
-
-        return new JsonResponse('Post with ID ' . $id_post . ' deleted');
+        return new JsonResponse($this->get('post_manager')->deletePost($id_post));
     }
 
     /**
@@ -137,18 +126,11 @@ class PostController extends Controller
 
             throw new HttpException(400, 'Bad request!');
         }
-
         $post_data = json_decode($content, true);
 
         $actual_user = $this->getUser()->getUsername();
 
-        $post = $actual_user->createNewPost($post_data['name_post'], $actual_user->getUsername(), $post_data['text_post']);
-
-        $this->validator($post);
-
-        $this->get('post_manager')->srvcFlush();
-
-        return new JsonResponse('Post created');
+        return new JsonResponse($this->get('post_manager')->createNewPost($actual_user, $post_data['name_post'], $post_data['text_post']));
     }
 
     /**
@@ -173,45 +155,54 @@ class PostController extends Controller
 
             throw new HttpException(400, 'Bad request!');
         }
-
         $post_data = json_decode($content, true);
 
-        $post = $this->get('post_manager')->getOnePost($id_post);
-
-        if(empty($post)){
-
-            throw new HttpException(204, 'Post not found');
-        }
-
-        if(isset($post_data['name_post'])){
-
-            $post->setNamePost($post_data['name_post']);
-        }
-
-        if(isset($post_data['text_post'])){
-
-            $post->setTextPost($post_data['text_post']);
-        }
-
-        $this->validator($post);
-
-        $this->get('post_manager')->savePostInDatabase($post);
-
-        return new JsonResponse('Post edit');
+        return new JsonResponse($this->get('post_manager')->editPost(
+            $id_post,
+            isset($post_data['name_post']) ? $post_data['name_post'] : null,
+            isset($post_data['text_post']) ? $post_data['text_post'] : null
+        ));
     }
 
-    //service methods
-
-    public function validator($object_validate)
+    /**
+     * @Route("/api/return_comments_post/{id_post}", name="return_comments_post")
+     * @Method("GET")
+     */
+    public function getAllCommentThisPost($id_post)
     {
-        $validator = $this->get('validator');
-        $errors = $validator->validate($object_validate);
+        $all_comments = $this->get('post_manager')->getAllCommentForThisPost($id_post);
 
-        if (count($errors) > 0) {
+        if(empty($all_comments)){
 
-            $errorsString = (string) $errors;
-
-            throw new HttpException(422, $errorsString);
+            throw new HttpException(204, 'Comments or post not found');
         }
+        $result = [];
+
+        foreach($all_comments as $value){
+
+            $result[] = [
+                'id' => $value->getId(),
+                'author_comment' => $value->getAuthorComment(),
+                'text_comment' => $value->getTextComment(),
+                'date_create_comment' => $value->getDateCreateComment()
+            ];
+        }
+
+        return new JsonResponse($result);
+    }
+
+    /**
+     * @Route("/api/upload_post_image/{id_post}", name="upload_post_image")
+     * @Method("POST")
+     */
+    /*
+     * Загружает сопроводительное изображение для поста. Если таковое
+     * уже имеется, оно будет заменено на новое, а старая картинка будет удалена.
+     */
+    public function uploadPictureForPostAction(Request $request, $id_post)
+    {
+        $file = $request->files->get('image_post');
+
+        return new JsonResponse($this->get('post_manager')->uploadPictureForPost($file, $id_post));
     }
 }

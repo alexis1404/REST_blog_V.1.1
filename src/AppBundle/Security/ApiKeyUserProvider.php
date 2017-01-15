@@ -20,7 +20,7 @@ class ApiKeyUserProvider implements UserProviderInterface
 
     public function getUsernameForApiKey($apiKey)
     {
-        $user = $this->em->getRepository('AppBundle:User')->findOneBy(array('apiKey' => $apiKey));
+        $user = $this->em->getRepository('AppBundle:User')->findOneBy(['apiKey' => $apiKey]);
 
         if(!$user){
 
@@ -37,14 +37,14 @@ class ApiKeyUserProvider implements UserProviderInterface
 
     public function loadUserByUsername($username)
     {
-        $user = $this->em->getRepository('AppBundle:User')->findOneBy(array('id' => $username));
+        $user = $this->em->getRepository('AppBundle:User')->findOneBy(['id' => $username]);
 
         $user_role = $user->getRoles();
 
         return new User(
             $username,
             null,
-            array($user_role)
+            [$user_role]
         );
     }
 
